@@ -3,30 +3,22 @@
 #include <random>
 
 
-const int ARRAY_SIZE = 10000000;
-unsigned int array_1[ARRAY_SIZE], array_0[ARRAY_SIZE];
+const int32_t ARRAY_SIZE = 200000000;
+uint32_t array[2][ARRAY_SIZE];
 
 
 
-void sortByBit(const int start, const int end, unsigned int bit) {
+void sortByBit(const int32_t start, const int32_t end, uint32_t bit) {
 
-    unsigned int *arrayRead;
-    unsigned int *arrayWrite;
+    uint32_t *arrayRead = array[(bit & 0x55555555) != 0];
+    uint32_t *arrayWrite = array[(bit & 0x55555555) == 0];
 
-    if ((bit & 1) != 0) {
-        arrayRead = array_0;
-        arrayWrite = array_1;
-    } else {
-        arrayRead = array_1;
-        arrayWrite = array_0;
-    }
+    int32_t top = start;
+    int32_t bot = end - 1;
 
-    int top = start;
-    int bot = end - 1;
+    for (size_t j = start; j < end; ++j) {
 
-    for (int j = start; j < end; ++j) {
-
-        if ((arrayRead[j] & (1 << bit)) != 0) {
+        if ((arrayRead[j] & bit) != 0) {
             arrayWrite[top] = arrayRead[j];
             ++top;
         } else {
@@ -36,11 +28,11 @@ void sortByBit(const int start, const int end, unsigned int bit) {
 
     }
 
-    --bit;
+    bit >>= 1;
     if (bit == 0) return;
 
-    if(top - start > 0) sortByBit(start, top, bit);
-    if(end - top > 0) sortByBit(top, end, bit);
+    if(top != start) sortByBit(start, top, bit);
+    if(end != top) sortByBit(top, end, bit);
 
 }
 
@@ -48,39 +40,35 @@ void sortByBit(const int start, const int end, unsigned int bit) {
 
 int main() {
 
+    uint32_t max_unsigned_int_size = std::numeric_limits<unsigned int>::max();
 
 
-    // Use the current time as a seed for the random number generator
-    std::mt19937 rng(static_cast<unsigned int>(1));
-    std::uniform_int_distribution<unsigned int> distribution(1, 10000000);
-
-    // Fill the array with random elements
-    for (int i = 0; i < ARRAY_SIZE; ++i) {
-        array_0[i] = distribution(rng);
-        //std::cout << " " << array_0[i];
+    //Random numbers
+    std::mt19937 rng(static_cast<uint32_t>(1));
+    std::uniform_int_distribution<uint32_t> distribution(0, max_unsigned_int_size);
+    for (size_t i = 0; i < ARRAY_SIZE; ++i) {
+        array[0][i] = distribution(rng);
+        array[1][i] = array[0][i];
     }
-    std::cout << "\n";
+
 
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    sortByBit(0,ARRAY_SIZE - 1, 31);
+
+    sortByBit(0,ARRAY_SIZE - 1, 1 << 31);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << "Execution Time: " << duration.count() << " seconds" << std::endl;
 
 
+    std::cout << "Array_0:\n";
+    for (size_t j = 0; j < 6; ++j) std::cout << " " << array[0][j];
 
-    for (int j = 0; j < 6; ++j) {
-        std::cout << " " << array_0[j];
-    }
 
-    std::cout << "\n";
-
-    for (int j = 0; j < 6; ++j) {
-        std::cout << " " << array_1[j];
-    }
+    std::cout << "\nArray_1:\n";
+    for (size_t j = 0; j < 6; ++j) std::cout << " " << array[1][j];
 
 
     return 0;
