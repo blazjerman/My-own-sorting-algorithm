@@ -3,7 +3,7 @@
 #include <random>
 
 
-void sortByBit(uint32_t *array, const int32_t start, const int32_t end, uint32_t bit) {
+void sortByBit(uint32_t *array, const int32_t start, const int32_t end, uint32_t mask) {
 
     int32_t top = start;
     int32_t bot = end - 1;
@@ -11,12 +11,12 @@ void sortByBit(uint32_t *array, const int32_t start, const int32_t end, uint32_t
 
     while (true) {
 
-        while ((array[top] & bit) != 0){
+        while ((array[top] & mask) != 0){
             ++top;
             if (bot <= top) goto endOfLoop;
         }
 
-        while ((array[bot] & bit) == 0){
+        while ((array[bot] & mask) == 0){
             --bot;
             if (bot <= top) goto endOfLoop;
         }
@@ -31,42 +31,40 @@ void sortByBit(uint32_t *array, const int32_t start, const int32_t end, uint32_t
     endOfLoop:
 
 
-    if (top < end) if((array[top] & bit) != 0) ++top;
+    if (top < end) if((array[top] & mask) != 0) ++top;
 
-    bit >>= 1;
-    if (bit == 0) return;
+    mask >>= 1;
+    if (mask == 0) return;
 
-    if(top != start) sortByBit(array, start, top, bit);
-    if(end != top) sortByBit(array, top, end, bit);
+    if(top != start) sortByBit(array, start, top, mask);
+    if(end != top) sortByBit(array, top, end, mask);
 
 }
 
 
 
+
+const int32_t ARRAY_SIZE = 5000;
+const uint32_t PRINT_N_FIRST = 6;
+
+
 int main() {
 
 
-    const int32_t ARRAY_SIZE = 2000000000;
-    //const int32_t ARRAY_SIZE = 6;
+
     auto *array = new uint32_t[ARRAY_SIZE];
 
 
     uint32_t max_unsigned_int_size = std::numeric_limits<unsigned int>::max();
 
 
-    //Random numbers
-    std::mt19937 rng(static_cast<uint32_t>(29381));
+    //Generate random numbers
+    std::mt19937 rng(static_cast<uint32_t>(36736));
     std::uniform_int_distribution<uint32_t> distribution(0, max_unsigned_int_size);
-    //std::uniform_int_distribution<uint32_t> distribution(0, 300);
     for (size_t i = 0; i < ARRAY_SIZE; ++i) array[i] = distribution(rng);
 
 
-    std::cout << "Array_0:\n";
-    for (size_t j = 0; j < 6; ++j) std::cout << " " << array[j];
-    std::cout << "\n";
-
     auto start = std::chrono::high_resolution_clock::now();
-
 
     sortByBit(array, 0,ARRAY_SIZE, 1 << 31);
 
@@ -75,8 +73,9 @@ int main() {
     std::cout << "Execution Time: " << duration.count() << " seconds" << std::endl;
 
 
-    std::cout << "Array_0:\n";
-    for (size_t j = 0; j < 6; ++j) std::cout << " " << array[j];
+    std::cout << "First n numbers:\n";
+
+    for (size_t j = 0; j < PRINT_N_FIRST; ++j) std::cout << " " << array[j];
 
     return 0;
 }
